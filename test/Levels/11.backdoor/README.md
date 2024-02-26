@@ -1,4 +1,5 @@
 # Challenge #11 - Backdoor
+
 To incentivize the creation of more secure wallets in their team, someone has deployed a registry of [Gnosis Safe wallets](https://github.com/safe-global/safe-contracts/blob/v1.3.0/contracts/GnosisSafe.sol). When someone in the team deploys and registers a wallet, they will earn 10 DVT tokens.
 
 To make sure everything is safe and sound, the registry tightly integrates with the legitimate [Gnosis Safe Proxy Factory](https://github.com/safe-global/safe-contracts/blob/v1.3.0/contracts/proxies/GnosisSafeProxyFactory.sol), and has some additional safety checks.
@@ -7,6 +8,5 @@ Currently there are four people registered as beneficiaries: Alice, Bob, Charlie
 
 Your goal is to take all funds from the registry. In a single transaction.
 
-[See the contracts](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/tree/master/src/Contracts/backdoor)
-<br/>
-[Complete the challenge](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/blob/master/test/Levels/backdoor/Backdoor.t.sol)
+- [See the contracts](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/tree/v3/src/Contracts/11.backdoor)
+- [Complete the challenge](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/blob/v3/test/Levels/11.backdoor/Backdoor.t.sol)

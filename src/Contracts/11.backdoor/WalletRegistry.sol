@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
+import {Ownable} from "solady/auth/Ownable.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {GnosisSafe} from "gnosis/GnosisSafe.sol";
-import {IProxyCreationCallback} from "gnosis/proxies/IProxyCreationCallback.sol";
 import {GnosisSafeProxy} from "gnosis/proxies/GnosisSafeProxy.sol";
+import {IProxyCreationCallback} from "gnosis/proxies/IProxyCreationCallback.sol";
 
 /**
  * @title WalletRegistry
@@ -15,9 +16,9 @@ import {GnosisSafeProxy} from "gnosis/proxies/GnosisSafeProxy.sol";
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
  */
 contract WalletRegistry is IProxyCreationCallback, Ownable {
-    uint256 private constant MAX_OWNERS = 1;
-    uint256 private constant MAX_THRESHOLD = 1;
-    uint256 private constant TOKEN_PAYMENT = 10 ether; // 10 * 10 ** 18
+    uint256 private constant EXPECTED_OWNERS_COUNT = 1;
+    uint256 private constant EXPECTED_THRESHOLD = 1;
+    uint256 private constant PAYMENT_AMOUNT = 10 ether;
 
     address public immutable masterCopy;
     address public immutable walletFactory;
@@ -28,14 +29,14 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
     // owner => wallet
     mapping(address => address) public wallets;
 
-    error AddressZeroIsNotAllowed();
-    error NotEnoughFundsToPay();
-    error CallerMustBeFactory();
-    error FakeMasterCopyUsed();
-    error WrongInitialization();
-    error InvalidThreshold();
-    error InvalidNumberOfOwners();
-    error OwnerIsNotRegisteredAsBeneficiary();
+    error NotEnoughFunds();
+    error CallerNotFactory();
+    error FakeMasterCopy();
+    error InvalidInitialization();
+    error InvalidThreshold(uint256 threshold);
+    error InvalidOwnersCount(uint256 count);
+    error OwnerIsNotABeneficiary();
+    error InvalidFallbackManager(address fallbackManager);
 
     constructor(
         address masterCopyAddress,
@@ -43,26 +44,22 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
         address tokenAddress,
         address[] memory initialBeneficiaries
     ) {
-        if (masterCopyAddress == address(0)) revert AddressZeroIsNotAllowed();
-        if (walletFactoryAddress == address(0)) {
-            revert AddressZeroIsNotAllowed();
-        }
+        _initializeOwner(msg.sender);
 
         masterCopy = masterCopyAddress;
         walletFactory = walletFactoryAddress;
         token = IERC20(tokenAddress);
 
-        for (uint256 i = 0; i < initialBeneficiaries.length; i++) {
-            addBeneficiary(initialBeneficiaries[i]);
+        for (uint256 i = 0; i < initialBeneficiaries.length;) {
+            unchecked {
+                beneficiaries[initialBeneficiaries[i]] = true;
+                ++i;
+            }
         }
     }
 
     function addBeneficiary(address beneficiary) public onlyOwner {
         beneficiaries[beneficiary] = true;
-    }
-
-    function _removeBeneficiary(address beneficiary) private {
-        beneficiaries[beneficiary] = false;
     }
 
     /**
@@ -73,45 +70,65 @@ contract WalletRegistry is IProxyCreationCallback, Ownable {
         external
         override
     {
-        // Make sure we have enough DVT to pay
-        if (token.balanceOf(address(this)) < TOKEN_PAYMENT) {
-            revert NotEnoughFundsToPay();
+        if (token.balanceOf(address(this)) < PAYMENT_AMOUNT) {
+            // fail early
+            revert NotEnoughFunds();
         }
 
         address payable walletAddress = payable(proxy);
 
         // Ensure correct factory and master copy
-        if (msg.sender != walletFactory) revert CallerMustBeFactory();
-        if (singleton != masterCopy) revert FakeMasterCopyUsed();
+        if (msg.sender != walletFactory) {
+            revert CallerNotFactory();
+        }
+
+        if (singleton != masterCopy) {
+            revert FakeMasterCopy();
+        }
 
         // Ensure initial calldata was a call to `GnosisSafe::setup`
         if (bytes4(initializer[:4]) != GnosisSafe.setup.selector) {
-            revert WrongInitialization();
+            revert InvalidInitialization();
         }
 
         // Ensure wallet initialization is the expected
-        if (GnosisSafe(walletAddress).getThreshold() != MAX_THRESHOLD) {
-            revert InvalidThreshold();
+        uint256 threshold = GnosisSafe(walletAddress).getThreshold();
+        if (threshold != EXPECTED_THRESHOLD) {
+            revert InvalidThreshold(threshold);
         }
 
-        if (GnosisSafe(walletAddress).getOwners().length != MAX_OWNERS) {
-            revert InvalidNumberOfOwners();
+        address[] memory owners = GnosisSafe(walletAddress).getOwners();
+        if (owners.length != EXPECTED_OWNERS_COUNT) {
+            revert InvalidOwnersCount(owners.length);
         }
 
         // Ensure the owner is a registered beneficiary
-        address walletOwner = GnosisSafe(walletAddress).getOwners()[0];
-
+        address walletOwner;
+        unchecked {
+            walletOwner = owners[0];
+        }
         if (!beneficiaries[walletOwner]) {
-            revert OwnerIsNotRegisteredAsBeneficiary();
+            revert OwnerIsNotABeneficiary();
+        }
+
+        address fallbackManager = _getFallbackManager(walletAddress);
+        if (fallbackManager != address(0)) {
+            revert InvalidFallbackManager(fallbackManager);
         }
 
         // Remove owner as beneficiary
-        _removeBeneficiary(walletOwner);
+        beneficiaries[walletOwner] = false;
 
         // Register the wallet under the owner's address
         wallets[walletOwner] = walletAddress;
 
         // Pay tokens to the newly created wallet
-        token.transfer(walletAddress, TOKEN_PAYMENT);
+        SafeTransferLib.safeTransfer(address(token), walletAddress, PAYMENT_AMOUNT);
+    }
+
+    function _getFallbackManager(address payable wallet) private view returns (address) {
+        return abi.decode(
+            GnosisSafe(wallet).getStorageAt(uint256(keccak256("fallback_manager.handler.address")), 0x20), (address)
+        );
     }
 }
