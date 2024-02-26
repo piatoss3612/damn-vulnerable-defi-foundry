@@ -1,10 +1,10 @@
 # Challenge #3 - Truster
+
 More and more lending pools are offering flash loans. In this case, a new pool has launched that is offering flash loans of DVT tokens for free.
 
-Currently the pool has 1 million DVT tokens in balance. And you have nothing.
+The pool holds 1 million DVT tokens. You have nothing.
 
-But don't worry, you might be able to take them all from the pool. In a single transaction.
+To pass this challenge, take all tokens out of the pool. If possible, in a single transaction.
 
-[See the contracts](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/tree/master/src/Contracts/truster)
-<br/>
-[Complete the challenge](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/blob/master/test/Levels/truster/Truster.t.sol)
+- [See the contracts](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/tree/v3/src/Contracts/03.truster)
+- [Complete the challenge](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/blob/v3/test/Levels/03.truster/Truster.t.sol)
