@@ -8,6 +8,7 @@ import {SideEntranceLenderPool} from "../../../src/Contracts/04.side-entrance/Si
 
 contract SideEntrance is Test {
     uint256 internal constant ETHER_IN_POOL = 1_000e18;
+    uint256 internal constant ATTACKER_INITIAL_ETH_BALANCE = 1e18;
 
     Utilities internal utils;
     SideEntranceLenderPool internal sideEntranceLenderPool;
@@ -16,9 +17,10 @@ contract SideEntrance is Test {
 
     function setUp() public {
         utils = new Utilities();
-        address payable[] memory users = utils.createUsers(1);
-        attacker = users[0];
+        attacker = utils.getNextUserAddress();
         vm.label(attacker, "Attacker");
+
+        vm.deal(attacker, ATTACKER_INITIAL_ETH_BALANCE);
 
         sideEntranceLenderPool = new SideEntranceLenderPool();
         vm.label(address(sideEntranceLenderPool), "Side Entrance Lender Pool");

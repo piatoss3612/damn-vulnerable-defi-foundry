@@ -1,10 +1,10 @@
-# Challenge #4 - Side entrance
-A surprisingly simple lending pool allows anyone to deposit ETH, and withdraw it at any point in time.
+# Challenge #4 - Side Entrance
 
-This very simple lending pool has 1000 ETH in balance already, and is offering free flash loans using the deposited ETH to promote their system.
+A surprisingly simple pool allows anyone to deposit ETH, and withdraw it at any point in time.
 
-You must take all ETH from the lending pool.
+It has 1000 ETH in balance already, and is offering free flash loans using the deposited ETH to promote their system.
 
-[See the contracts](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/tree/master/src/Contracts/side-entrance)
-<br/>
-[Complete the challenge](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/blob/master/test/Levels/side-entrance/SideEntrance.t.sol)
+Starting with 1 ETH in balance, pass the challenge by taking all ETH from the pool.
+
+- [See the contracts](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/tree/v3/src/Contracts/04.side-entrance)
+- [Complete the challenge](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/blob/v3/test/Levels/04.side-entrance/SideEntrance.t.sol)
