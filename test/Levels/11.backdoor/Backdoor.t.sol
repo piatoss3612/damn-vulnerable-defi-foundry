@@ -5,7 +5,7 @@ import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
-import {WalletRegistry} from "../../../src/Contracts/backdoor/WalletRegistry.sol";
+import {WalletRegistry} from "../../../src/Contracts/11.backdoor/WalletRegistry.sol";
 import {GnosisSafe} from "gnosis/GnosisSafe.sol";
 import {GnosisSafeProxyFactory} from "gnosis/proxies/GnosisSafeProxyFactory.sol";
 
@@ -29,7 +29,6 @@ contract Backdoor is Test {
         /**
          * SETUP SCENARIO - NO NEED TO CHANGE ANYTHING HERE
          */
-
         utils = new Utilities();
         users = utils.createUsers(NUM_USERS);
 
@@ -57,12 +56,7 @@ contract Backdoor is Test {
         vm.label(address(dvt), "DVT");
 
         // Deploy the registry
-        walletRegistry = new WalletRegistry(
-            address(masterCopy),
-            address(walletFactory),
-            address(dvt),
-            users
-        );
+        walletRegistry = new WalletRegistry(address(masterCopy), address(walletFactory), address(dvt), users);
 
         // Users are registered as beneficiaries
         for (uint256 i = 0; i < NUM_USERS; i++) {

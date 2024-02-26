@@ -5,7 +5,7 @@ import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
-import {PuppetPool} from "../../../src/Contracts/puppet/PuppetPool.sol";
+import {PuppetPool} from "../../../src/Contracts/08.puppet/PuppetPool.sol";
 
 interface UniswapV1Exchange {
     function addLiquidity(uint256 min_liquidity, uint256 max_tokens, uint256 deadline)

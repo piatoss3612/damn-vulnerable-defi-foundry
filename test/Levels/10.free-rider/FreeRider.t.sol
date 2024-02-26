@@ -3,9 +3,11 @@ pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
 
-import {FreeRiderBuyer} from "../../../src/Contracts/free-rider/FreeRiderBuyer.sol";
-import {FreeRiderNFTMarketplace} from "../../../src/Contracts/free-rider/FreeRiderNFTMarketplace.sol";
-import {IUniswapV2Router02, IUniswapV2Factory, IUniswapV2Pair} from "../../../src/Contracts/free-rider/Interfaces.sol";
+import {FreeRiderBuyer} from "../../../src/Contracts/10.free-rider/FreeRiderBuyer.sol";
+import {FreeRiderNFTMarketplace} from "../../../src/Contracts/10.free-rider/FreeRiderNFTMarketplace.sol";
+import {
+    IUniswapV2Router02, IUniswapV2Factory, IUniswapV2Pair
+} from "../../../src/Contracts/10.free-rider/Interfaces.sol";
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {WETH9} from "../../../src/Contracts/WETH9.sol";
@@ -91,9 +93,7 @@ contract FreeRider is Test {
         assertEq(uniswapV2Pair.token1(), address(weth));
         assertGt(uniswapV2Pair.balanceOf(deployer), 0);
 
-        freeRiderNFTMarketplace = new FreeRiderNFTMarketplace{
-            value: MARKETPLACE_INITIAL_ETH_BALANCE
-        }(AMOUNT_OF_NFTS);
+        freeRiderNFTMarketplace = new FreeRiderNFTMarketplace{value: MARKETPLACE_INITIAL_ETH_BALANCE}(AMOUNT_OF_NFTS);
 
         damnValuableNFT = DamnValuableNFT(freeRiderNFTMarketplace.token());
 
@@ -120,10 +120,7 @@ contract FreeRider is Test {
 
         vm.startPrank(buyer);
 
-        freeRiderBuyer = new FreeRiderBuyer{value: BUYER_PAYOUT}(
-            attacker,
-            address(damnValuableNFT)
-        );
+        freeRiderBuyer = new FreeRiderBuyer{value: BUYER_PAYOUT}(attacker, address(damnValuableNFT));
 
         vm.stopPrank();
 

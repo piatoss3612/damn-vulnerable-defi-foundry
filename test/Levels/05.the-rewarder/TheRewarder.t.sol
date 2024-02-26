@@ -5,10 +5,10 @@ import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
-import {TheRewarderPool} from "../../../src/Contracts/the-rewarder/TheRewarderPool.sol";
-import {RewardToken} from "../../../src/Contracts/the-rewarder/RewardToken.sol";
-import {AccountingToken} from "../../../src/Contracts/the-rewarder/AccountingToken.sol";
-import {FlashLoanerPool} from "../../../src/Contracts/the-rewarder/FlashLoanerPool.sol";
+import {TheRewarderPool} from "../../../src/Contracts/05.the-rewarder/TheRewarderPool.sol";
+import {RewardToken} from "../../../src/Contracts/05.the-rewarder/RewardToken.sol";
+import {AccountingToken} from "../../../src/Contracts/05.the-rewarder/AccountingToken.sol";
+import {FlashLoanerPool} from "../../../src/Contracts/05.the-rewarder/FlashLoanerPool.sol";
 
 contract TheRewarder is Test {
     uint256 internal constant TOKENS_IN_LENDER_POOL = 1_000_000e18;

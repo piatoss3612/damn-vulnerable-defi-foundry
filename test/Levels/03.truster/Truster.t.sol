@@ -5,12 +5,13 @@ import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
+import {TrusterLenderPool} from "../../../src/Contracts/03.truster/TrusterLenderPool.sol";
 
-contract SafeMiners is Test {
-    uint256 internal constant DEPOSIT_TOKEN_AMOUNT = 2_000_042e18;
-    address internal constant DEPOSIT_ADDRESS = 0x79658d35aB5c38B6b988C23D02e0410A380B8D5c;
+contract Truster is Test {
+    uint256 internal constant TOKENS_IN_POOL = 1_000_000e18;
 
     Utilities internal utils;
+    TrusterLenderPool internal trusterLenderPool;
     DamnValuableToken internal dvt;
     address payable internal attacker;
 
@@ -23,16 +24,15 @@ contract SafeMiners is Test {
         attacker = users[0];
         vm.label(attacker, "Attacker");
 
-        // Deploy Damn Valuable Token contract
         dvt = new DamnValuableToken();
         vm.label(address(dvt), "DVT");
 
-        // Deposit the DVT tokens to the address
-        dvt.transfer(DEPOSIT_ADDRESS, DEPOSIT_TOKEN_AMOUNT);
+        trusterLenderPool = new TrusterLenderPool(address(dvt));
+        vm.label(address(trusterLenderPool), "Truster Lender Pool");
 
-        // Ensure initial balances are correctly set
-        assertEq(dvt.balanceOf(DEPOSIT_ADDRESS), DEPOSIT_TOKEN_AMOUNT);
-        assertEq(dvt.balanceOf(attacker), 0);
+        dvt.transfer(address(trusterLenderPool), TOKENS_IN_POOL);
+
+        assertEq(dvt.balanceOf(address(trusterLenderPool)), TOKENS_IN_POOL);
 
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
@@ -50,11 +50,8 @@ contract SafeMiners is Test {
     }
 
     function validation() internal {
-        /**
-         * SUCCESS CONDITIONS
-         */
-        // The attacker took all tokens available in the deposit address
-        assertEq(dvt.balanceOf(DEPOSIT_ADDRESS), 0);
-        assertEq(dvt.balanceOf(attacker), DEPOSIT_TOKEN_AMOUNT);
+        // Attacker has taken all tokens from the pool
+        assertEq(dvt.balanceOf(address(trusterLenderPool)), 0);
+        assertEq(dvt.balanceOf(address(attacker)), TOKENS_IN_POOL);
     }
 }

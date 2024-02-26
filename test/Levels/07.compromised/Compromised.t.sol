@@ -3,9 +3,9 @@ pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
 
-import {Exchange} from "../../../src/Contracts/compromised/Exchange.sol";
-import {TrustfulOracle} from "../../../src/Contracts/compromised/TrustfulOracle.sol";
-import {TrustfulOracleInitializer} from "../../../src/Contracts/compromised/TrustfulOracleInitializer.sol";
+import {Exchange} from "../../../src/Contracts/07.compromised/Exchange.sol";
+import {TrustfulOracle} from "../../../src/Contracts/07.compromised/TrustfulOracle.sol";
+import {TrustfulOracleInitializer} from "../../../src/Contracts/07.compromised/TrustfulOracleInitializer.sol";
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 
 contract Compromised is Test {
@@ -57,16 +57,10 @@ contract Compromised is Test {
         }
 
         // Deploy the oracle and setup the trusted sources with initial prices
-        trustfulOracle = new TrustfulOracleInitializer(
-            sources,
-            symbols,
-            initialPrices
-        ).oracle();
+        trustfulOracle = new TrustfulOracleInitializer(sources, symbols, initialPrices).oracle();
 
         // Deploy the exchange and get the associated ERC721 token
-        exchange = new Exchange{value: EXCHANGE_INITIAL_ETH_BALANCE}(
-            address(trustfulOracle)
-        );
+        exchange = new Exchange{value: EXCHANGE_INITIAL_ETH_BALANCE}(address(trustfulOracle));
         damnValuableNFT = exchange.token();
 
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
