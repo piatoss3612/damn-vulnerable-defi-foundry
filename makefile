@@ -34,4 +34,6 @@ Backdoor:
 Climber:
 	forge test --match-test testExploit --match-contract Climber
 
+WalletMining:
+	forge test --match-test testExploit --match-contract WalletMining
 

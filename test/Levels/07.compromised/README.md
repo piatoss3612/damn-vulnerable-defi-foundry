@@ -16,7 +16,7 @@ server: cloudflare
 
 A related on-chain exchange is selling (absurdly overpriced) collectibles called “DVNFT”, now at 999 ETH each.
 
-This price is fetched from an on-chain oracle, based on 3 trusted reporters: 0xA732...A105,0xe924...9D15 and 0x81A5...850c.
+This price is fetched from an on-chain oracle, based on 3 trusted reporters: `0xA732...A105`,`0xe924...9D15` and `0x81A5...850c`.
 
 Starting with just 0.1 ETH in balance, pass the challenge by obtaining all ETH available in the exchange.
 
