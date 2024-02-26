@@ -1,11 +1,10 @@
 # Challenge #1 - Unstoppable
 
-There's a lending pool with a million DVT tokens in balance, offering flash loans for free.
+There’s a tokenized vault with a million DVT tokens deposited. It’s offering flash loans for free, until the grace period ends.
 
-If only there was a way to attack and stop the pool from offering flash loans ...
+To pass the challenge, make the vault stop offering flash loans.
 
-You start with 100 DVT tokens in balance.
+You start with 10 DVT tokens in balance.
 
-[See the contracts](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/tree/master/src/Contracts/unstoppable)
-<br/>
-[Complete the challenge](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/blob/master/test/Levels/unstoppable/Unstoppable.t.sol)
+- [See the contracts](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/tree/v3/src/Contracts/01.unstoppable)
+- [Complete the challenge](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/blob/v3/test/Levels/01.unstoppable/Unstoppable.t.sol)
