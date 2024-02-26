@@ -9,7 +9,7 @@ import {TrustfulOracleInitializer} from "../../../src/Contracts/07.compromised/T
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 
 contract Compromised is Test {
-    uint256 internal constant EXCHANGE_INITIAL_ETH_BALANCE = 9990e18;
+    uint256 internal constant EXCHANGE_INITIAL_ETH_BALANCE = 999e18;
     uint256 internal constant INITIAL_NFT_PRICE = 999e18;
 
     Exchange internal exchange;

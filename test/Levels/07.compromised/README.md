@@ -1,5 +1,7 @@
 # Challenge #7 - Compromised
-While poking around a web service of one of the most popular DeFi projects in the space, you get a somewhat strange response from their server. This is a snippet:
+
+While poking around a web service of one of the most popular DeFi projects in the space, you get a somewhat strange response from their server. Here’s a snippet:
+
 ```Shell
 HTTP/2 200 OK
 content-type: text/html
@@ -11,12 +13,12 @@ server: cloudflare
 
 4d 48 67 79 4d 44 67 79 4e 44 4a 6a 4e 44 42 68 59 32 52 6d 59 54 6c 6c 5a 44 67 34 4f 57 55 32 4f 44 56 6a 4d 6a 4d 31 4e 44 64 68 59 32 4a 6c 5a 44 6c 69 5a 57 5a 6a 4e 6a 41 7a 4e 7a 46 6c 4f 54 67 33 4e 57 5a 69 59 32 51 33 4d 7a 59 7a 4e 44 42 69 59 6a 51 34
 ```
-A related on-chain exchange is selling (absurdly overpriced) collectibles called "DVNFT", now at 999 ETH each
 
-This price is fetched from an on-chain oracle, and is based on three trusted reporters: `0xA73209FB1a42495120166736362A1DfA9F95A105`, `0xe92401A4d3af5E446d93D11EEc806b1462b39D15` and `0x81A5D6E50C214044bE44cA0CB057fe119097850c`.
+A related on-chain exchange is selling (absurdly overpriced) collectibles called “DVNFT”, now at 999 ETH each.
 
-Starting with only 0.1 ETH in balance, you must steal all ETH available in the exchange.
+This price is fetched from an on-chain oracle, based on 3 trusted reporters: 0xA732...A105,0xe924...9D15 and 0x81A5...850c.
 
-[See the contracts](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/tree/master/src/Contracts/compromised)
-<br/>
-[Complete the challenge](https://github.com/nicolasgarcia214/damn-vulnerable-defi-foundry/blob/master/test/Levels/compromised/Compromised.t.sol)
+Starting with just 0.1 ETH in balance, pass the challenge by obtaining all ETH available in the exchange.
+
+- [See the contracts](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/tree/v3/src/Contracts/07.compromised)
+- [Complete the challenge](https://github.com/piatoss3612/damn-vulnerable-defi-foundry/blob/v3/test/Levels/07.compromised/Compromised.t.sol)
