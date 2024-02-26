@@ -139,6 +139,8 @@ contract PuppetV2 is Test {
         console.log("Attacker DVT balance after borrowing: ", dvt.balanceOf(attacker) / 10 ** 18);
         console.log("Pool DVT balance after borrowing: ", dvt.balanceOf(address(puppetV2Pool)) / 10 ** 18);
 
+        vm.stopPrank();
+
         /**
          * EXPLOIT END *
          */
