@@ -54,7 +54,7 @@ contract FreeRider is Test {
         // Attacker starts with little ETH balance
         attacker = payable(address(uint160(uint256(keccak256(abi.encodePacked("attacker"))))));
         vm.label(attacker, "Attacker");
-        vm.deal(attacker, 0.5 ether);
+        vm.deal(attacker, ATTACKER_INITIAL_ETH_BALANCE);
 
         // Deploy WETH contract
         weth = new WETH9();

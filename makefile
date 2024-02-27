@@ -37,3 +37,6 @@ Climber:
 WalletMining:
 	forge test --match-test testExploit --match-contract WalletMining
 
+PuppetV3:
+	forge test --match-test testExploit --match-contract PuppetV3
+
