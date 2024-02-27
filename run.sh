@@ -55,8 +55,8 @@ case $1 in
     forge test --match-contract Climber
     ;;
 
-  safe-miners | 13 | safe)
-    forge test --match-contract SafeMiners
+  wallet-mining | 13 | wall)
+    forge test --match-contract WalletMining
     ;;
 
   *)
