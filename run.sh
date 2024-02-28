@@ -63,6 +63,10 @@ case $1 in
     forge test --match-contract PuppetV3
     ;;
 
+  abi-smuggling | 15 | abis)
+    forge test --match-contract ABISmuggling
+    ;;
+
   *)
     echo "Invalid input use either the challenge number, the name of the contract folder, or the first 4 letter of the name (lowercase)"
     ;;

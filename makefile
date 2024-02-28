@@ -40,3 +40,5 @@ WalletMining:
 PuppetV3:
 	forge test --match-test testExploit --match-contract PuppetV3
 
+ABISmuggling:
+	forge test --match-test testExploit --match-contract ABISmuggling
