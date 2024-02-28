@@ -28,14 +28,20 @@ contract ABISmuggling is Test {
         attacker = users[1];
         recovery = users[2];
 
+        vm.label(deployer, "Deployer");
+        vm.label(attacker, "Attacker");
+        vm.label(recovery, "Recovery");
+
         vm.startPrank(deployer);
 
         // Deploy Damn Valuable Token contract
         dvt = new DamnValuableToken();
+        vm.label(address(dvt), "DamnValuableToken");
 
         // Deploy Vault
         vault = new SelfAuthorizedVault();
         assertGt(vault.getLastWithdrawalTimestamp(), 0);
+        vm.label(address(vault), "SelfAuthorizedVault");
 
         // Set permissions
         bytes32 deployerPermission =
