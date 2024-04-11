@@ -1,6 +1,6 @@
 # Challenge #14 - Puppet V3
 
-Even on a bear market, the devs behind [the lending pool](https://www.damnvulnerabledefi.xyz/challenges/puppet-v2/) kept building.
+Even on a bear market, the devs behind [the lending pool](https://www.damnvulnerabledefi.xyz/challenges/puppet-v3/) kept building.
 
 In the latest version, they’re using Uniswap V3 as an oracle. That’s right, no longer using spot prices! This time the pool queries the time-weighted average price of the asset, with all the recommended libraries.
 
